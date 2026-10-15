@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Windows Login Monitor – Documentation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ---------- Colour tokens ---------- */
+:root {
+  --paper: #EEF1F4;
+  --surface: #FFFFFF;
+  --ink: #1B2A3A;
+  --muted: #5B6B7C;
+  --line: #C9D2DC;
+  --blue: #2457A6;
+  --blue-soft: #DCE6F5;
+  --amber: #B5650F;
+  --amber-soft: #F6E6D2;
+  --green: #2F7A4F;
+  --code-bg: #E4E9EF;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121A23;
+    --surface: #1A2531;
+    --ink: #E3E9EF;
+    --muted: #93A3B3;
+    --line: #2C3A48;
+    --blue: #7EA6E6;
+    --blue-soft: #1F3150;
+    --amber: #E3A048;
+    --amber-soft: #3A2A15;
+    --green: #6CC08F;
+    --code-bg: #0F161E;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121A23;
+  --surface: #1A2531;
+  --ink: #E3E9EF;
+  --muted: #93A3B3;
+  --line: #2C3A48;
+  --blue: #7EA6E6;
+  --blue-soft: #1F3150;
+  --amber: #E3A048;
+  --amber-soft: #3A2A15;
+  --green: #6CC08F;
+  --code-bg: #0F161E;
+  color-scheme: dark;
+}
+
+/* ---------- Base ---------- */
+:root {
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: calc(env(safe-area-inset-top, 0px) + 72px); scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+code, pre, .mono { font-family: "IBM Plex Mono", Consolas, "Courier New", monospace; }
+a { color: var(--blue); }
+:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+img, svg { max-width: 100%; }
+
+/* ---------- Layout ---------- */
+.shell {
+  display: grid;
+  grid-template-columns: 250px minmax(0, 1fr);
+  max-width: 1180px;
+  margin: 0 auto;
+}
+.toc {
+  position: sticky;
+  top: env(safe-area-inset-top, 0px);
+  align-self: start;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 2rem 1.25rem 2rem 1.5rem;
+  border-right: 1px solid var(--line);
+}
+.toc-title { font-weight: 600; font-size: 1.05rem; margin: 0 0 0.25rem; }
+.toc-sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 1.5rem; }
+.toc ol { list-style: none; margin: 0; padding: 0; }
+.toc li a {
+  display: block;
+  padding: 0.35rem 0.6rem;
+  border-left: 2px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+.toc li a:hover { color: var(--ink); }
+.toc li a.active { color: var(--blue); border-left-color: var(--blue); font-weight: 500; }
+
+main { padding: 2.5rem 2.5rem 6rem; min-width: 0; }
+section { max-width: 760px; margin-bottom: 4rem; }
+section.wide { max-width: none; }
+
+/* Mobile top bar with the contents toggle */
+.topbar { display: none; }
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    padding: 0.7rem 1.1rem;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    z-index: 10;
+    background: var(--paper);
+  }
+  .toc {
+    display: none;
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 52px);
+    left: 0; right: 0;
+    height: auto;
+    max-height: 70vh;
+    background: var(--surface);
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    z-index: 19;
+    padding: 1rem 1.25rem;
+  }
+  .toc.open { display: block; }
+  .toc-title, .toc-sub { display: none; }
+  main { padding: 1.5rem 1.1rem 5rem; }
+}
+.topbar strong { font-size: 0.98rem; }
+.btn {
+  font: inherit;
+  font-size: 0.88rem;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 0.35rem 0.75rem;
+  cursor: pointer;
+}
+.btn:hover { border-color: var(--blue); }
+
+/* ---------- Type ---------- */
+h1 { font-size: 2.4rem; line-height: 1.15; margin: 0 0 0.75rem; font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 1.55rem; line-height: 1.25; margin: 0 0 1rem; font-weight: 600; padding-top: 0.5rem; }
+h3 { font-size: 1.1rem; margin: 1.75rem 0 0.5rem; font-weight: 600; }
+p { margin: 0 0 1rem; }
+.lead { font-size: 1.15rem; color: var(--muted); max-width: 62ch; }
+.muted { color: var(--muted); }
+.small { font-size: 0.88rem; }
+
+code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 4px; font-size: 0.9em; }
+.codeblock { position: relative; margin: 0.75rem 0 1.25rem; }
+.codeblock pre {
+  margin: 0;
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.9rem 1rem;
+  overflow-x: auto;
+  font-size: 0.86rem;
+  line-height: 1.55;
+}
+.codeblock pre code { background: none; padding: 0; font-size: inherit; }
+.copy {
+  position: absolute; top: 0.45rem; right: 0.45rem;
+  font: 500 0.75rem "IBM Plex Sans", system-ui, sans-serif;
+  background: var(--surface); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 5px;
+  padding: 0.2rem 0.55rem; cursor: pointer;
+}
+.copy:hover { color: var(--ink); }
+
+.table-wrap { overflow-x: auto; margin: 0.75rem 0 1.25rem; }
+table { border-collapse: collapse; width: 100%; font-size: 0.93rem; }
+th, td { text-align: left; padding: 0.55rem 0.75rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); }
+
+.note {
+  border-left: 3px solid var(--amber);
+  background: var(--amber-soft);
+  padding: 0.75rem 1rem;
+  border-radius: 0 6px 6px 0;
+  margin: 1rem 0 1.25rem;
+}
+.note p:last-child { margin-bottom: 0; }
+
+/* ---------- Hero ---------- */
+.hero { margin-bottom: 3rem; max-width: 820px; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.25rem; }
+.tag {
+  font-size: 0.82rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  color: var(--muted);
+}
+
+/* ---------- Flowchart (the memorable element) ---------- */
+.flow { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+.zone {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 1rem 1rem 1.1rem;
+  background: var(--surface);
+}
+.zone.pc { border-top: 4px solid var(--blue); }
+.zone.cloud { border-top: 4px solid var(--green); }
+.zone-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.85rem; }
+.zone-head h3 { margin: 0; font-size: 1rem; }
+.zone-head span { font-size: 0.85rem; color: var(--muted); }
+.chain { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: stretch; gap: 0.5rem 0; }
+.chain li { display: flex; align-items: center; }
+.chain li:not(:last-child)::after {
+  content: "";
+  width: 22px; height: 2px;
+  background: var(--line);
+  margin: 0 2px;
+  flex: none;
+  position: relative;
+}
+.node {
+  font: inherit;
+  text-align: left;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  cursor: pointer;
+  min-width: 118px;
+  transition: border-color .15s, background .15s;
+}
+.node .n { display: block; font-size: 0.75rem; color: var(--muted); font-family: "IBM Plex Mono", Consolas, monospace; }
+.node .t { display: block; font-weight: 600; font-size: 0.9rem; line-height: 1.3; }
+.node:hover { border-color: var(--blue); }
+.node[aria-pressed="true"] { background: var(--blue-soft); border-color: var(--blue); }
+.zone.cloud .node[aria-pressed="true"] { border-color: var(--green); }
+
+.handoff {
+  display: flex; align-items: center; gap: 0.6rem;
+  color: var(--muted); font-size: 0.88rem; padding-left: 1rem;
+}
+.handoff::before { content: ""; width: 2px; height: 28px; background: var(--line); }
+
+.detail {
+  margin-top: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 1.1rem 1.25rem;
+  min-height: 150px;
+}
+.detail h4 { margin: 0 0 0.35rem; font-size: 1.05rem; }
+.detail .where { font-size: 0.85rem; color: var(--muted); margin-bottom: 0.6rem; }
+.detail dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 0.6rem 0 0; font-size: 0.93rem; }
+.detail dt { color: var(--muted); }
+.detail dd { margin: 0; }
+
+@media (max-width: 640px) {
+  .chain { flex-direction: column; align-items: stretch; }
+  .chain li { flex-direction: column; align-items: stretch; }
+  .chain li:not(:last-child)::after { width: 2px; height: 14px; margin: 2px 0 2px 1.2rem; }
+  .node { width: 100%; }
+}
+
+/* ---------- Infographic ---------- */
+.funnel { display: grid; gap: 0.45rem; margin: 1rem 0 0.5rem; }
+.funnel-row { display: grid; grid-template-columns: minmax(0, 1fr); }
+.funnel-bar {
+  background: var(--blue-soft);
+  border-left: 4px solid var(--blue);
+  border-radius: 0 6px 6px 0;
+  padding: 0.6rem 0.9rem;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 1rem;
+}
+.funnel-bar strong { font-size: 1.35rem; font-family: "IBM Plex Mono", Consolas, monospace; font-weight: 500; }
+.funnel-bar span { color: var(--muted); font-size: 0.92rem; text-align: right; }
+.funnel-row:nth-child(1) .funnel-bar { width: 100%; }
+.funnel-row:nth-child(2) .funnel-bar { width: 86%; }
+.funnel-row:nth-child(3) .funnel-bar { width: 72%; }
+.funnel-row:nth-child(4) .funnel-bar { width: 58%; }
+.funnel-row:nth-child(5) .funnel-bar { width: 44%; border-left-color: var(--green); }
+@media (max-width: 640px) { .funnel-row .funnel-bar { width: 100% !important; } }
+
+.trust {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0;
+  margin-top: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.trust-side { padding: 1.1rem 1.25rem; }
+.trust-side h4 { margin: 0 0 0.25rem; font-size: 1rem; }
+.trust-side ul { margin: 0.5rem 0 0; padding-left: 1.1rem; font-size: 0.92rem; }
+.trust-side li { margin-bottom: 0.25rem; }
+.trust-line {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  border-left: 2px dashed var(--amber);
+  color: var(--amber);
+  font-size: 0.8rem;
+  padding: 0.5rem 0.4rem;
+  text-align: center;
+}
+.key { font-family: "IBM Plex Mono", Consolas, monospace; font-size: 0.85rem; color: var(--muted); }
+@media (max-width: 640px) {
+  .trust { grid-template-columns: 1fr; }
+  .trust-line { writing-mode: horizontal-tb; transform: none; border-left: 0; border-top: 2px dashed var(--amber); padding: 0.4rem 1.25rem; text-align: left; }
+}
+
+/* ---------- Event explorer ---------- */
+.ids { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.75rem 0 1rem; }
+.id-btn {
+  font: 500 0.92rem "IBM Plex Mono", Consolas, monospace;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line); border-radius: 6px;
+  padding: 0.35rem 0.7rem; cursor: pointer;
+}
+.id-btn:hover { border-color: var(--blue); }
+.id-btn[aria-pressed="true"] { background: var(--blue); color: var(--surface); border-color: var(--blue); }
+.id-btn.watch { border-bottom: 3px solid var(--amber); }
+.event-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 1.1rem 1.25rem; }
+.event-card h4 { margin: 0 0 0.6rem; font-size: 1.1rem; }
+.event-card .grid { display: grid; grid-template-columns: max-content 1fr; gap: 0.45rem 1rem; font-size: 0.94rem; }
+.event-card .grid div:nth-child(odd) { color: var(--muted); }
+@media (max-width: 520px) { .event-card .grid { grid-template-columns: 1fr; gap: 0.1rem; } .event-card .grid div:nth-child(even) { margin-bottom: 0.5rem; } }
+
+/* ---------- Setup checklist ---------- */
+.steps { list-style: none; margin: 1rem 0; padding: 0; counter-reset: step; }
+.step {
+  counter-increment: step;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  margin-bottom: 0.75rem;
+}
+.step > label {
+  display: flex; gap: 0.85rem; align-items: center;
+  padding: 0.85rem 1.1rem; cursor: pointer;
+}
+.step > label::before {
+  content: counter(step);
+  flex: none;
+  width: 1.9rem; height: 1.9rem;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid var(--line);
+  font: 500 0.9rem "IBM Plex Mono", Consolas, monospace;
+  color: var(--muted);
+}
+.step input { width: 1.1rem; height: 1.1rem; accent-color: var(--green); margin: 0 0 0 auto; order: 2; flex: none; }
+.step .st { font-weight: 600; }
+.step .body { padding: 0 1.1rem 0.9rem 3.85rem; }
+.step.done > label::before { content: "✓"; background: var(--green); color: var(--surface); border-color: var(--green); }
+.step.done .st { color: var(--muted); }
+@media (max-width: 520px) { .step .body { padding-left: 1.1rem; } }
+.progress { display: flex; align-items: center; gap: 0.75rem; font-size: 0.9rem; color: var(--muted); }
+.progress-track { flex: 1; max-width: 260px; height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; }
+.progress-fill { height: 100%; width: 0; background: var(--green); transition: width .25s; }
+
+/* ---------- Troubleshooting ---------- */
+details {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  margin-bottom: 0.6rem;
+}
+summary { cursor: pointer; padding: 0.75rem 1rem; font-weight: 500; }
+summary code { font-weight: 400; }
+details[open] summary { border-bottom: 1px solid var(--line); }
+details .inner { padding: 0.85rem 1rem 0.4rem; }
+.mermaid-wrap { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 1rem; margin: 1rem 0 1.5rem; }
+pre.mermaid { margin: 0; background: none; text-align: center; }
+
+footer { color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--line); padding-top: 1.25rem; max-width: 760px; }
+</style>
+</head>
+<body>
+
+<!-- Mobile-only bar -->
+<div class="topbar">
+  <strong>Windows Login Monitor</strong>
+  <button class="btn" id="tocToggle" aria-expanded="false" aria-controls="toc">Contents</button>
+</div>
+
+<div class="shell">
+
+  <!-- ===== Table of contents ===== -->
+  <nav class="toc" id="toc" aria-label="Table of contents">
+    <p class="toc-title">Windows Login Monitor</p>
+    <p class="toc-sub">Project documentation</p>
+    <ol>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#flow">How it works</a></li>
+      <li><a href="#glance">At a glance</a></li>
+      <li><a href="#events">Event IDs</a></li>
+      <li><a href="#files">Project files</a></li>
+      <li><a href="#setup">Setup checklist</a></li>
+      <li><a href="#scheduler">Task Scheduler</a></li>
+      <li><a href="#dashboard">Dashboard &amp; deployment</a></li>
+      <li><a href="#database">Supabase table</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+      <li><a href="#security">Security notes</a></li>
+    </ol>
+  </nav>
+
+  <main>
+
+    <!-- ===== Overview ===== -->
+    <header class="hero" id="overview">
+      <h1>Windows Login Monitor</h1>
+      <p class="lead">Reads login events from the Windows Security log every hour, counts them per day for each event ID, and shows the result on a Streamlit dashboard where you pick the event ID from a dropdown.</p>
+      <div class="hero-meta">
+        <span class="tag">Python 3.14</span>
+        <span class="tag">pywin32</span>
+        <span class="tag">Task Scheduler</span>
+        <span class="tag">Supabase</span>
+        <span class="tag">Streamlit Cloud</span>
+      </div>
+    </header>
+
+    <!-- ===== Flowchart ===== -->
+    <section class="wide" id="flow">
+      <h2>How it works</h2>
+      <p class="muted">Select any step to see what it does and what it produces.</p>
+
+      <div class="flow">
+        <div class="zone pc">
+          <div class="zone-head"><h3>Your Windows PC</h3><span>runs as SYSTEM, every hour</span></div>
+          <ol class="chain">
+            <li><button class="node" data-node="trigger"><span class="n">start</span><span class="t">Task Scheduler</span></button></li>
+            <li><button class="node" data-node="read"><span class="n">step 1</span><span class="t">Read Security log</span></button></li>
+            <li><button class="node" data-node="raw"><span class="n">step 1</span><span class="t">events_raw.csv</span></button></li>
+            <li><button class="node" data-node="count"><span class="n">step 2</span><span class="t">Count per day</span></button></li>
+            <li><button class="node" data-node="daily"><span class="n">step 3</span><span class="t">Daily files</span></button></li>
+            <li><button class="node" data-node="charts"><span class="n">step 4</span><span class="t">Bar charts</span></button></li>
+            <li><button class="node" data-node="upload"><span class="n">step 5</span><span class="t">Upload</span></button></li>
+          </ol>
+        </div>
+
+        <div class="handoff">Only the daily totals leave the PC, sent with the secret key</div>
+
+        <div class="zone cloud">
+          <div class="zone-head"><h3>Cloud</h3><span>always online</span></div>
+          <ol class="chain">
+            <li><button class="node" data-node="supabase"><span class="n">store</span><span class="t">Supabase</span></button></li>
+            <li><button class="node" data-node="streamlit"><span class="n">show</span><span class="t">Streamlit dashboard</span></button></li>
+            <li><button class="node" data-node="github"><span class="n">code</span><span class="t">GitHub repo</span></button></li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="detail" id="detail" aria-live="polite"></div>
+    </section>
+
+    <!-- ===== Infographic ===== -->
+    <section id="glance">
+      <h2>At a glance</h2>
+      <p>What one run looks like, using the real numbers from the scheduled run on 16/10/2026 at 02:26 on <code>DESKTOP-PDHPTQT</code>.</p>
+
+      <div class="funnel" role="list">
+        <div class="funnel-row" role="listitem"><div class="funnel-bar"><strong>1,386</strong><span>login events read from the Security log</span></div></div>
+        <div class="funnel-row" role="listitem"><div class="funnel-bar"><strong>9</strong><span>event IDs tracked</span></div></div>
+        <div class="funnel-row" role="listitem"><div class="funnel-bar"><strong>7</strong><span>days in each window</span></div></div>
+        <div class="funnel-row" role="listitem"><div class="funnel-bar"><strong>63</strong><span>rows uploaded (9 × 7)</span></div></div>
+        <div class="funnel-row" role="listitem"><div class="funnel-bar"><strong>1</strong><span>dashboard, one dropdown</span></div></div>
+      </div>
+      <p class="small muted">The 63 rows are upserted, so the hourly runs refresh today's numbers instead of adding duplicates.</p>
+
+      <h3>Who holds which key</h3>
+      <div class="trust">
+        <div class="trust-side">
+          <h4>Your PC</h4>
+          <div class="key">.env → sb_secret_…</div>
+          <ul>
+            <li>Can read and write the table</li>
+            <li>Never pushed to GitHub (.gitignore)</li>
+            <li>Never pasted into Streamlit</li>
+          </ul>
+        </div>
+        <div class="trust-line">trust boundary</div>
+        <div class="trust-side">
+          <h4>Streamlit Cloud</h4>
+          <div class="key">Secrets → sb_publishable_…</div>
+          <ul>
+            <li>Read only: one GRANT SELECT plus an RLS policy</li>
+            <li>If it leaks, nobody can change your data</li>
+            <li>GitHub holds code only, no keys</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Event explorer ===== -->
+    <section id="events">
+      <h2>Event IDs</h2>
+      <p>The collector tracks nine login-related events. Choose one to see what it means and what to watch for. IDs underlined in amber are the ones most worth watching from a security point of view.</p>
+      <div class="ids" id="ids" role="group" aria-label="Event IDs"></div>
+      <div class="event-card" id="eventCard" aria-live="polite"></div>
+    </section>
+
+    <!-- ===== Files ===== -->
+    <section id="files">
+      <h2>Project files</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>What it does</th><th>Runs on</th></tr></thead>
+          <tbody>
+            <tr><td><code>collector.py</code></td><td>Reads the Security log, writes the raw and daily files, draws charts, uploads to Supabase</td><td>Windows PC</td></tr>
+            <tr><td><code>dashboard.py</code></td><td>Streamlit app with machine and event ID dropdowns</td><td>PC or Streamlit Cloud</td></tr>
+            <tr><td><code>run_collector.bat</code></td><td>Starts the collector with the full Python path and writes a log</td><td>Windows PC</td></tr>
+            <tr><td><code>setup_task_scheduler.bat</code></td><td>Creates the hourly task (run once, as Administrator)</td><td>Windows PC</td></tr>
+            <tr><td><code>supabase_schema.sql</code></td><td>Creates the table, grants and read-only policy</td><td>Supabase SQL Editor</td></tr>
+            <tr><td><code>requirements.txt</code></td><td>Python packages; pywin32 installs on Windows only</td><td>Both</td></tr>
+            <tr><td><code>.env.example</code></td><td>Template for your URL and secret key</td><td>Windows PC</td></tr>
+            <tr><td><code>.gitignore</code></td><td>Keeps <code>.env</code> and <code>output/</code> out of GitHub</td><td>Git</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>What lands in the output folder</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>File</th><th>Contents</th></tr></thead>
+          <tbody>
+            <tr><td><code>events_raw.csv</code></td><td>One row per event: timestamp, date, event ID, name, user</td></tr>
+            <tr><td><code>daily_counts.csv</code></td><td>One row per event ID per day</td></tr>
+            <tr><td><code>daily_counts.txt</code></td><td>Readable summary, for example <code>Day 1 | 28/09 =&gt; 60</code></td></tr>
+            <tr><td><code>chart_4624.png</code> …</td><td>One bar chart per event ID</td></tr>
+            <tr><td><code>collector_log.txt</code></td><td>Everything printed by scheduled runs</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== Setup checklist ===== -->
+    <section id="setup">
+      <h2>Setup checklist</h2>
+      <p>Tick each step as you go. Your progress is saved in this browser.</p>
+      <div class="progress"><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div><span id="progressText">0 of 7 done</span></div>
+
+      <ol class="steps" id="steps">
+        <li class="step">
+          <label><span class="st">Install the packages system-wide</span><input type="checkbox" data-step="1" aria-label="Step 1 done"></label>
+          <div class="body">
+            <p>Open an <strong>Administrator</strong> terminal so the packages go into Program Files, where SYSTEM can find them.</p>
+            <div class="codeblock"><pre><code>cd /d d:\NJ2026\python\windows-login-monitor\windows-login-monitor
+"C:\Program Files\Python314\python.exe" -m pip install --ignore-installed -r requirements.txt</code></pre></div>
+          </div>
+        </li>
+        <li class="step">
+          <label><span class="st">Create the Supabase table</span><input type="checkbox" data-step="2" aria-label="Step 2 done"></label>
+          <div class="body"><p>In Supabase, open SQL Editor, paste <code>supabase_schema.sql</code> and run it. The full script is in <a href="#database">Supabase table</a>.</p></div>
+        </li>
+        <li class="step">
+          <label><span class="st">Add your keys to .env</span><input type="checkbox" data-step="3" aria-label="Step 3 done"></label>
+          <div class="body">
+            <p>Copy <code>.env.example</code> to <code>.env</code> and use the <strong>secret</strong> key.</p>
+            <div class="codeblock"><pre><code>SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_KEY=sb_secret_...</code></pre></div>
+          </div>
+        </li>
+        <li class="step">
+          <label><span class="st">Run the collector once by hand</span><input type="checkbox" data-step="4" aria-label="Step 4 done"></label>
+          <div class="body">
+            <p>In the Administrator terminal:</p>
+            <div class="codeblock"><pre><code>python collector.py</code></pre></div>
+            <p>You should see Step 1 to Step 5 and <code>--- Done ---</code>.</p>
+          </div>
+        </li>
+        <li class="step">
+          <label><span class="st">Create the scheduled task</span><input type="checkbox" data-step="5" aria-label="Step 5 done"></label>
+          <div class="body"><p>Right-click <code>setup_task_scheduler.bat</code> and choose <strong>Run as administrator</strong>. Details are in <a href="#scheduler">Task Scheduler</a>.</p></div>
+        </li>
+        <li class="step">
+          <label><span class="st">Check the task log</span><input type="checkbox" data-step="6" aria-label="Step 6 done"></label>
+          <div class="body"><p>Open <code>output\collector_log.txt</code>. The latest entry should end with <code>Step 5: uploaded 63 rows</code> and <code>--- Done ---</code>.</p></div>
+        </li>
+        <li class="step">
+          <label><span class="st">Open the dashboard</span><input type="checkbox" data-step="7" aria-label="Step 7 done"></label>
+          <div class="body">
+            <div class="codeblock"><pre><code>streamlit run dashboard.py</code></pre></div>
+            <p>It opens at <code>localhost:8501</code>. Pick your machine and an event ID in the sidebar.</p>
+          </div>
+        </li>
+      </ol>
+    </section>
+
+    <!-- ===== Task Scheduler ===== -->
+    <section id="scheduler">
+      <h2>Task Scheduler</h2>
+      <p>The task is called <code>WindowsLoginMonitor</code>. It runs <code>run_collector.bat</code> every hour as SYSTEM with the highest privileges, so it works even when nobody is logged in and can read the protected Security log.</p>
+
+      <h3>The command that creates it</h3>
+      <div class="codeblock"><pre><code>schtasks /Create /TN "WindowsLoginMonitor" /TR "\"%~dp0run_collector.bat\"" /SC HOURLY /RU SYSTEM /RL HIGHEST /F</code></pre></div>
+
+      <h3>run_collector.bat</h3>
+      <p>SYSTEM can't see your user PATH, so the script uses the full Python path. The quotes around <code>"PYTHON=..."</code> stop a stray trailing space from breaking it.</p>
+      <div class="codeblock"><pre><code>cd /d "%~dp0"
+set "PYTHON=C:\Program Files\Python314\python.exe"
+if not exist output mkdir output
+echo ===== Task run %date% %time% ===== &gt;&gt; output\collector_log.txt
+"%PYTHON%" collector.py &gt;&gt; output\collector_log.txt 2&gt;&amp;1</code></pre></div>
+
+      <h3>Handy commands</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Do this</th><th>Command (Administrator)</th></tr></thead>
+          <tbody>
+            <tr><td>Run it now</td><td><code>schtasks /Run /TN "WindowsLoginMonitor"</code></td></tr>
+            <tr><td>See next run time</td><td><code>schtasks /Query /TN "WindowsLoginMonitor" /V /FO LIST</code></td></tr>
+            <tr><td>Remove it</td><td><code>schtasks /Delete /TN "WindowsLoginMonitor" /F</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== Dashboard ===== -->
+    <section id="dashboard">
+      <h2>Dashboard &amp; deployment</h2>
+      <p>GitHub only stores the code. Streamlit Cloud runs <code>dashboard.py</code> from your repo and reads the data from Supabase. The collector keeps running on your PC because it needs your PC's event log.</p>
+
+      <h3>Push to GitHub</h3>
+      <div class="codeblock"><pre><code>git init
+git add .
+git status</code></pre></div>
+      <div class="note"><p>Check that <code>.env</code> is <strong>not</strong> listed before you commit. It holds your secret key.</p></div>
+      <div class="codeblock"><pre><code>git commit -m "Windows login monitor"
+git branch -M main
+git remote add origin https://github.com/YOUR-USERNAME/windows-login-monitor.git
+git push -u origin main</code></pre></div>
+
+      <h3>Deploy on Streamlit Cloud</h3>
+      <p>At share.streamlit.io, create an app from your repo with <code>dashboard.py</code> as the main file. Under Advanced settings, choose a Python version and add these Secrets, using the <strong>publishable</strong> key:</p>
+      <div class="codeblock"><pre><code>SUPABASE_URL = "https://your-project.supabase.co"
+SUPABASE_KEY = "sb_publishable_..."</code></pre></div>
+      <p>The dashboard caches data for 5 minutes. Use <strong>Refresh data</strong> in the sidebar to load new numbers straight away.</p>
+    </section>
+
+    <!-- ===== Database ===== -->
+    <section id="database">
+      <h2>Supabase table</h2>
+      <p>One row per machine, event ID and day. The unique constraint is what lets the collector upsert instead of inserting duplicates.</p>
+      <div class="codeblock"><pre><code>create table if not exists login_event_counts (
+    id            bigint generated always as identity primary key,
+    machine_name  text        not null,
+    event_id      integer     not null,
+    event_name    text,
+    event_date    date        not null,
+    count         integer     not null default 0,
+    collected_at  timestamptz not null default now(),
+    unique (machine_name, event_id, event_date)
+);
+
+grant select, insert, update on public.login_event_counts to service_role;
+grant select on public.login_event_counts to anon;
+
+alter table login_event_counts enable row level security;
+
+drop policy if exists "Dashboard can read counts" on login_event_counts;
+create policy "Dashboard can read counts"
+    on login_event_counts for select to anon using (true);</code></pre></div>
+      <p class="small muted">The secret key uses the <code>service_role</code> role and the publishable key uses the <code>anon</code> role, which is why the grants name them that way.</p>
+    </section>
+
+    <!-- ===== Troubleshooting ===== -->
+    <section id="troubleshooting">
+      <h2>Troubleshooting</h2>
+      <p>Follow the chart from the top to find where a run is failing.</p>
+
+      <div class="mermaid-wrap">
+<pre class="mermaid">
+flowchart TD
+  A["Run python collector.py"] --> B{"Did Step 1 work?"}
+  B -- "Could not open the Security log" --> B1["Use an Administrator terminal"]
+  B -- Yes --> C{"Did Step 5 work?"}
+  C -- "42501 permission denied" --> C1["Run the two GRANT lines"]
+  C -- Yes --> D{"Does the task log end with Done?"}
+  D -- "cannot find the path specified" --> D1["Fix the PYTHON path in run_collector.bat"]
+  D -- "No module named ..." --> D2["Reinstall packages as Administrator"]
+  D -- Yes --> E["Open the dashboard"]
+</pre>
+      </div>
+
+      <details>
+        <summary><code>permission denied for table login_event_counts</code> (42501)</summary>
+        <div class="inner">
+          <p>The table exists but the role behind your key isn't allowed to use it. Newer Supabase projects don't add these grants automatically. Run only these two lines in the SQL Editor:</p>
+          <div class="codeblock"><pre><code>grant select, insert, update on public.login_event_counts to service_role;
+grant select on public.login_event_counts to anon;</code></pre></div>
+        </div>
+      </details>
+
+      <details>
+        <summary><code>policy "Dashboard can read counts" already exists</code> (42710)</summary>
+        <div class="inner"><p>The whole schema file was run a second time. Supabase stops at the first error, so anything after it never ran. Run only the lines you still need, or use the updated schema file that drops the policy first.</p></div>
+      </details>
+
+      <details>
+        <summary>Task log says <code>The system cannot find the path specified</code></summary>
+        <div class="inner"><p>The Python path in <code>run_collector.bat</code> is wrong, often because of a space at the end of the line. Use <code>set "PYTHON=C:\Program Files\Python314\python.exe"</code> with the quotes around the whole assignment. Don't use the <code>WindowsApps</code> path; it is a Store shortcut that SYSTEM can't run.</p></div>
+      </details>
+
+      <details>
+        <summary>Task log says <code>No module named 'packaging'</code> (or another module)</summary>
+        <div class="inner">
+          <p>The packages were installed in your personal folder, which SYSTEM can't see. Reinstall them into Program Files from an Administrator terminal:</p>
+          <div class="codeblock"><pre><code>"C:\Program Files\Python314\python.exe" -m pip install --ignore-installed -r requirements.txt</code></pre></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Events 4800 and 4801 always show 0</summary>
+        <div class="inner">
+          <p>Lock and unlock events are only logged when this audit category is turned on:</p>
+          <div class="codeblock"><pre><code>auditpol /set /subcategory:"Other Logon/Logoff Events" /success:enable /failure:enable</code></pre></div>
+        </div>
+      </details>
+
+      <details>
+        <summary>Dashboard says there's no data yet</summary>
+        <div class="inner"><p>Check that rows exist in Supabase Table Editor. If they do, make sure the dashboard's key is the publishable key and that the <code>grant select ... to anon</code> line has been run.</p></div>
+      </details>
+    </section>
+
+    <!-- ===== Security ===== -->
+    <section id="security">
+      <h2>Security notes</h2>
+      <p>The secret key can change or delete everything in your project, so it lives only in <code>.env</code> on the Windows PC. The dashboard gets the publishable key, which the grants and the RLS policy limit to reading this one table.</p>
+      <p>Only daily totals leave the PC. The raw file with usernames, <code>events_raw.csv</code>, stays in the local <code>output</code> folder, which is excluded from Git.</p>
+      <p>The task runs as SYSTEM because the Security log needs administrator rights. Keep the project folder somewhere only administrators can edit, since anything in <code>run_collector.bat</code> would also run as SYSTEM.</p>
+    </section>
+
+    <footer>Windows Login Monitor documentation · last updated 16/10/2026</footer>
+  </main>
+</div>
+
+<script>
+/* =========================================================
+   Data for the interactive parts
+   ========================================================= */
+
+// Flowchart step details
+const NODES = {
+  trigger: { title: "Task Scheduler", where: "WindowsLoginMonitor task → run_collector.bat",
+    what: "Starts the collector every hour as SYSTEM with the highest privileges, so it runs even when nobody is logged in.",
+    output: "A timestamp line in output\\collector_log.txt" },
+  read: { title: "Read the Security log", where: "collector.py → read_events()",
+    what: "Asks Windows for only the nine login event IDs from the last 7 days, using an XPath filter so the filtering happens inside Windows.",
+    output: "A list of events with time, ID, name and user" },
+  raw: { title: "Write events_raw.csv", where: "collector.py → write_raw_file()",
+    what: "Saves every matching event as one row. This is the full record, and it stays on the PC.",
+    output: "output\\events_raw.csv" },
+  count: { title: "Count per day", where: "collector.py → count_per_day()",
+    what: "Reads events_raw.csv back and counts each event ID per day. Days with no events get 0, so charts have no gaps.",
+    output: "Counts for 9 event IDs × 7 days" },
+  daily: { title: "Write the daily files", where: "collector.py → write_daily_files()",
+    what: "Writes the totals twice: a CSV for tools and a text file in the Day 1 | 28/09 => 60 format for people.",
+    output: "daily_counts.csv and daily_counts.txt" },
+  charts: { title: "Draw bar charts", where: "collector.py → draw_charts()",
+    what: "Saves one bar chart per event ID with the count printed above each bar.",
+    output: "chart_4624.png, chart_4625.png and so on" },
+  upload: { title: "Upload to Supabase", where: "collector.py → upload_to_supabase()",
+    what: "Upserts one row per machine, event ID and day, using the secret key from .env. Existing rows are updated, not duplicated.",
+    output: "63 rows in login_event_counts" },
+  supabase: { title: "Supabase", where: "Table: login_event_counts",
+    what: "Stores the daily totals for every machine. Grants and an RLS policy make the publishable key read-only.",
+    output: "Data the dashboard can query" },
+  streamlit: { title: "Streamlit dashboard", where: "dashboard.py on Streamlit Cloud or localhost:8501",
+    what: "Loads the totals, then filters them with the Machine and Event ID dropdowns and draws the per-day bar chart.",
+    output: "Chart, totals, busiest day and a day-by-day table" },
+  github: { title: "GitHub repo", where: "github.com/YOUR-USERNAME/windows-login-monitor",
+    what: "Holds the code only. Streamlit Cloud pulls dashboard.py from here. .env and output/ are excluded by .gitignore.",
+    output: "The source the cloud app runs from" }
+};
+
+// Event ID explorer data
+const EVENTS = [
+  { id: 4624, name: "Successful logon", watch: false,
+    meaning: "An account signed in successfully. Includes local, network, service and remote desktop logons.",
+    look: "Logons at unusual hours or remote desktop logons from accounts that don't normally use it.",
+    audit: "Logged by default" },
+  { id: 4625, name: "Failed logon", watch: true,
+    meaning: "A sign-in attempt failed, for example a wrong password or unknown username.",
+    look: "Many failures in a short time can point to password guessing or spraying.",
+    audit: "Logged by default" },
+  { id: 4634, name: "Logoff", watch: false,
+    meaning: "A logon session ended.",
+    look: "Paired with 4624 it shows how long sessions last.",
+    audit: "Logged by default" },
+  { id: 4647, name: "User-initiated logoff", watch: false,
+    meaning: "A user signed out themselves, rather than the session timing out.",
+    look: "Mostly useful for building a timeline of interactive use.",
+    audit: "Logged by default" },
+  { id: 4648, name: "Logon with explicit credentials", watch: true,
+    meaning: "A process signed in using credentials typed or supplied explicitly, such as with runas.",
+    look: "Unexpected use can be a sign of someone moving between accounts or machines.",
+    audit: "Logged by default" },
+  { id: 4672, name: "Admin (special privileges) logon", watch: true,
+    meaning: "A logon was given administrator-level privileges.",
+    look: "Accounts appearing here that shouldn't have admin rights.",
+    audit: "Logged by default" },
+  { id: 4740, name: "Account locked out", watch: true,
+    meaning: "An account was locked after too many failed attempts.",
+    look: "Lockouts alongside a rise in 4625 suggest someone is trying passwords.",
+    audit: "Depends on User Account Management auditing" },
+  { id: 4800, name: "Workstation locked", watch: false,
+    meaning: "The screen was locked.",
+    look: "Helps show when a user stepped away.",
+    audit: "Needs Other Logon/Logoff Events auditing" },
+  { id: 4801, name: "Workstation unlocked", watch: false,
+    meaning: "The screen was unlocked.",
+    look: "Unlocks at odd times can be worth a second look.",
+    audit: "Needs Other Logon/Logoff Events auditing" }
+];
+
+/* =========================================================
+   Flowchart: click a node to show its details
+   ========================================================= */
+const detail = document.getElementById("detail");
+const nodeButtons = document.querySelectorAll(".node");
+
+function showNode(key) {
+  const n = NODES[key];
+  nodeButtons.forEach(b => b.setAttribute("aria-pressed", String(b.dataset.node === key)));
+  detail.innerHTML = `
+    <h4>${n.title}</h4>
+    <div class="where mono">${n.where}</div>
+    <p>${n.what}</p>
+    <dl><dt>Produces</dt><dd>${n.output}</dd></dl>`;
+}
+nodeButtons.forEach(b => b.addEventListener("click", () => showNode(b.dataset.node)));
+showNode("read");
+
+/* =========================================================
+   Event ID explorer
+   ========================================================= */
+const idsBox = document.getElementById("ids");
+const eventCard = document.getElementById("eventCard");
+
+function showEvent(id) {
+  const e = EVENTS.find(x => x.id === id);
+  idsBox.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(Number(b.dataset.id) === id)));
+  eventCard.innerHTML = `
+    <h4><span class="mono">${e.id}</span> ${e.name}</h4>
+    <div class="grid">
+      <div>Meaning</div><div>${e.meaning}</div>
+      <div>Watch for</div><div>${e.look}</div>
+      <div>Auditing</div><div>${e.audit}</div>
+    </div>`;
+}
+EVENTS.forEach(e => {
+  const b = document.createElement("button");
+  b.className = "id-btn" + (e.watch ? " watch" : "");
+  b.textContent = e.id;
+  b.dataset.id = e.id;
+  b.title = e.name;
+  b.addEventListener("click", () => showEvent(e.id));
+  idsBox.appendChild(b);
+});
+showEvent(4625);
+
+/* =========================================================
+   Setup checklist (saved in this browser)
+   ========================================================= */
+const STORE_KEY = "wlm-checklist";
+const boxes = document.querySelectorAll(".step input");
+
+function loadChecks() {
+  try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {}; }
+  catch { return {}; }
+}
+function saveChecks(state) {
+  try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch { /* storage unavailable - fine */ }
+}
+function updateProgress() {
+  const done = [...boxes].filter(b => b.checked).length;
+  document.getElementById("progressFill").style.width = (done / boxes.length * 100) + "%";
+  document.getElementById("progressText").textContent = `${done} of ${boxes.length} done`;
+}
+const saved = loadChecks();
+boxes.forEach(box => {
+  box.checked = !!saved[box.dataset.step];
+  box.closest(".step").classList.toggle("done", box.checked);
+  box.addEventListener("change", () => {
+    const state = loadChecks();
+    state[box.dataset.step] = box.checked;
+    saveChecks(state);
+    box.closest(".step").classList.toggle("done", box.checked);
+    updateProgress();
+  });
+});
+updateProgress();
+
+/* =========================================================
+   Copy buttons on every code block
+   ========================================================= */
+document.querySelectorAll(".codeblock").forEach(block => {
+  const btn = document.createElement("button");
+  btn.className = "copy";
+  btn.textContent = "Copy";
+  btn.addEventListener("click", async () => {
+    const text = block.querySelector("code").innerText;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      // Fallback for browsers that block the clipboard API
+      const ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      try { document.execCommand("copy"); } catch {}
+      ta.remove();
+    }
+    btn.textContent = "Copied";
+    setTimeout(() => (btn.textContent = "Copy"), 1500);
+  });
+  block.appendChild(btn);
+});
+
+/* =========================================================
+   Table of contents: highlight the section on screen
+   ========================================================= */
+const tocLinks = [...document.querySelectorAll(".toc a")];
+const sections = tocLinks.map(a => document.querySelector(a.getAttribute("href")));
+
+const spy = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      tocLinks.forEach(a => a.classList.toggle("active", a.getAttribute("href") === "#" + entry.target.id));
+    }
+  });
+}, { rootMargin: "-20% 0px -70% 0px" });
+sections.forEach(s => s && spy.observe(s));
+
+// Mobile: open/close the contents panel
+const toc = document.getElementById("toc");
+const tocToggle = document.getElementById("tocToggle");
+tocToggle.addEventListener("click", () => {
+  const open = toc.classList.toggle("open");
+  tocToggle.setAttribute("aria-expanded", String(open));
+});
+tocLinks.forEach(a => a.addEventListener("click", () => {
+  toc.classList.remove("open");
+  tocToggle.setAttribute("aria-expanded", "false");
+}));
+</script>
+<!-- Mermaid draws the troubleshooting flowchart when the file is opened on its own -->
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  mermaid.initialize({ startOnLoad: true, theme: dark ? "dark" : "neutral" });
+</script>
+</body>
+</html>
