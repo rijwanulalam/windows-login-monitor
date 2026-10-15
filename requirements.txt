@@ -1,0 +1,8 @@
+# Works on Windows (collector + dashboard) and on Streamlit Cloud (dashboard only).
+# pywin32 is skipped automatically on Linux, so Streamlit Cloud won't fail installing it.
+pywin32; sys_platform == "win32"
+matplotlib
+pandas
+python-dotenv
+streamlit
+supabase
